@@ -1,6 +1,6 @@
-# Waterpolo Games Dashboard
+# 🏊 Waterpolo Score Ticker - CPA Medellín
 
-Un dashboard en tiempo real para mostrar partidos de waterpolo con diferentes estados (EN VIVO, FINALIZADO, PROGRAMADO) y navegación horizontal responsiva.
+Un sistema completo para el seguimiento de partidos de waterpolo en tiempo real del Club de Waterpolo CPA Medellín, con actualizaciones instantáneas, panel de control, visualización de estadísticas e información del club.
 
 ## 📋 Tabla de Contenidos
 
@@ -9,60 +9,126 @@ Un dashboard en tiempo real para mostrar partidos de waterpolo con diferentes es
 - [Estructura del Proyecto](#estructura-del-proyecto)
 - [Instalación](#instalación)
 - [Configuración de Base de Datos](#configuración-de-base-de-datos)
+- [Páginas Disponibles](#páginas-disponibles)
 - [Guía para Principiantes](#guía-para-principiantes)
 - [Guía Técnica](#guía-técnica)
 - [Componentes](#componentes)
-- [Estados de Partidos](#estados-de-partidos)
-- [Personalización](#personalización)
+- [Personalización de Estilos](#personalización-de-estilos)
 - [Troubleshooting](#troubleshooting)
 
-## 🚀 Características
+## 🚀 Características Principales
 
-- **Cards de partidos** con información completa (equipos, scores, competencia)
-- **Tres estados**: EN VIVO (con animación), FINALIZADO, PROGRAMADO
-- **Navegación horizontal** con flechas que aparecen on hover
-- **Diseño responsivo** con scroll sin barra visible
-- **Base de datos en tiempo real** con Supabase
-- **Espaciado consistente** entre cards independientemente del estado
-- **Arquitectura modular** con componentes reutilizables
-- **Loading states** con spinner animado
-- **Código limpio** y mantenible
-- **Alineación natural** de cards de izquierda a derecha
-- **Variables de entorno seguras** para credenciales de API
+- **Panel de Control en Tiem Real**
+  - Actualizaciones instantáneas de marcadores
+  - Control de cuartos y tiempos
+  - Cambio de estados de partido
+  - Interfaz intuitiva para administradores
+
+- **Visualización de Partidos**
+  - Cards interactivas con información detallada
+  - Tres estados: EN VIVO (con animación), FINALIZADO, PROGRAMADO
+  - Marcadores por cuarto con historial
+  - Ordenamiento inteligente (en vivo > programados > finalizados)
+
+- **Página del Club**
+  - Información institucional del CPA Medellín
+  - Historia del club
+  - Horarios de entrenamiento
+  - Ubicación y datos de contacto
+  - Llamados a la acción claros
+
+- **Interfaz de Usuario**
+  - Diseño responsivo y accesible
+  - Navegación intuitiva
+  - Paleta de colores corporativa (azul oscuro, cian y dorado)
+  - Indicadores visuales de estado
+  - Carga optimizada con spinners
+  - Transiciones suaves
+
+- **Tecnologías Avanzadas**
+  - Base de datos en tiempo real con Supabase
+  - Actualizaciones en vivo con WebSockets
+  - Arquitectura modular y escalable
+  - Código limpio y documentado
+  - Estilos con TailwindCSS
 
 ## 🛠 Stack Tecnológico
 
-- **Frontend**: React 19.2.0 + Vite 7.2.4
-- **Estilos**: TailwindCSS 4.1.18
-- **Base de Datos**: Supabase (PostgreSQL)
-- **Cliente HTTP**: @supabase/supabase-js 2.91.1
+### Frontend
+- **React 19.2.0** - Biblioteca principal de UI
+- **Vite 7.2.4** - Empaquetador y servidor de desarrollo
+- **TailwindCSS 4.1.18** - Framework de estilos
+- **React Router 7.13.0** - Navegación entre páginas
+
+### Backend
+- **Supabase** - Base de datos PostgreSQL en tiempo real
+  - Autenticación
+  - Base de datos relacional
+  - Suscripciones en tiempo real
+
+### Herramientas de Desarrollo
+- **ESLint** - Linting de código
+- **PostgreSQL** - Sistema de base de datos
+- **Git** - Control de versiones
+
+## 🌐 Páginas Disponibles
+
+- **Inicio** (`/`)
+  - Hero con imagen destacada
+  - Lista de partidos en tiempo real
+  - Visualización de marcadores y estados
+
+- **Equipo** (`/teams`)
+  - Información del equipo
+  - Lista de jugadores
+  - Estadísticas del equipo
+
+- **Club** (`/club`)
+  - Información del Club de Waterpolo de Antioquia
+  - Historia del club
+  - Ubicación y datos de contacto
+  - Información institucional
+
+- **Panel de Control** (`/admin`)
+  - Gestión de partidos
+  - Actualización de marcadores en tiempo real
+  - Control de estados de partido
 
 ## 📁 Estructura del Proyecto
 
 ```
-web-CPA-Med/
+waterpoloScoreTicker/
+├── public/                     # Archivos estáticos
+│   └── images/                 # Imágenes y assets
+│
 ├── src/
+│   ├── components/             # Componentes de React
+│   │   ├── GameControlPanel.jsx # Panel de control de partidos
+│   │   ├── GamesContainer.jsx  # Contenedor de partidos
+│   │   ├── Hero.jsx           # Componente hero principal
+│   │   ├── Layout.jsx         # Diseño principal
+│   │   ├── LoadingSpinner.jsx # Componente de carga
+│   │   ├── MatchCenter.jsx    # Vista central de partidos
+│   │   ├── NavBar.jsx         # Barra de navegación
+│   │   ├── TeamPage.jsx       # Página del equipo
+│   │   ├── WaterpoloGameCard.jsx # Tarjeta de partido
+│   │   └── ClubPage.jsx        # Página informativa del club
+│   │
 │   ├── config/
-│   │   └── supabase.js          # Configuración de Supabase
+│   │   └── supabase.js        # Configuración de Supabase
+│   │
 │   ├── services/
-│   │   └── gamesService.js      # Funciones de API
-│   ├── components/
-│   │   ├── WaterpoloGameCard.jsx # Componente de card de partido
-│   │   ├── GamesContainer.jsx   # Contenedor con navegación
-│   │   ├── NavigationArrows.jsx # Flechas de navegación
-│   │   └── LoadingSpinner.jsx   # Componente de carga
-│   ├── data/
-│   │   └── mockGames.js          # Datos de ejemplo (obsoleto)
-│   ├── App.jsx                   # Componente principal
-│   ├── index.css                 # Estilos globales
-│   └── main.jsx                  # Punto de entrada
+│   │   ├── gamesService.js    # Servicio de gestión de partidos
+│   │   └── realtimeService.js # Servicio de actualizaciones en tiempo real
+│   │
+│   ├── App.jsx                # Componente raíz
+│   └── main.jsx               # Punto de entrada
+│
+├── .gitignore
 ├── package.json
-├── vite.config.js
 └── README.md
-```
 
 ## ⚙️ Instalación
-
 ### Prerrequisitos
 - Node.js 18+ 
 - npm o yarn
@@ -72,28 +138,23 @@ web-CPA-Med/
 
 1. **Clonar el repositorio**
    ```bash
-   git clone <URL-del-repositorio>
-   cd web-CPA-Med
+   git clone https://github.com/tu-usuario/waterpoloScoreTicker.git
+   cd waterpoloScoreTicker
    ```
 
-2. **Instalar dependencias**
+2. **Instalar dependencias***
    ```bash
    npm install
    ```
 
-3. **Configurar Supabase**
-   - Crear proyecto en [supabase.com](https://supabase.com)
-   - Crear tabla `games` (ver sección de configuración)
-   - Copiar URL y API key
-
-4. **Configurar variables de entorno**
-   ```bash
-   # Crear archivo .env.local (no se sube a Git)
-   VITE_SUPABASE_URL=tu-url-de-supabase
-   VITE_SUPABASE_ANON_KEY=tu-api-key
+3. **Configurar variables de entorno***
+   Crear archivo `.env` en la raíz:
+   ```env
+   VITE_SUPABASE_URL=tu_url_de_supabase
+   VITE_SUPABASE_ANON_KEY=tu_clave_anonima
    ```
-   **Importante**: El archivo `.env.local` está protegido por `.gitignore` para mantener tus credenciales seguras
 
+4. **Iniciar servidor de desarrollo***
 5. **Iniciar desarrollo**
    ```bash
    npm run dev
@@ -217,110 +278,39 @@ const { data, error } = await supabase
 - **Clases personalizadas**: `.scrollbar-hide` para ocultar scrollbars
 - **Diseño responsivo**: `min-w-max` + `overflow-x-auto`
 
-## 🎯 Componentes
+## 🎨 Personalización de Estilos
 
-### App.jsx
+El proyecto utiliza una paleta de colores corporativa basada en la identidad visual del CPA Medellín:
 
-**Responsabilidades:**
-- Estado principal de la aplicación (games, loading)
-- Carga de datos desde Supabase
-- Renderizado del layout principal
+- **Azul Marino**: `slate-800` a `slate-600` (fondos y texto principal)
+- **Azul Claro**: `cyan-500` a `cyan-300` (elementos interactivos, enlaces)
+- **Dorado**: `amber-500` a `amber-300` (botones de acción, acentos)
+- **Blanco/Negro**: Para contraste y legibilidad
 
-**Props:** Ninguno (componente raíz)
+### Componentes Principales
 
-### GamesContainer.jsx
+- **Hero**: Portada principal con imagen destacada
+- **NavBar**: Barra de navegación con menú responsivo
+- **WaterpoloGameCard**: Visualización de partidos con estados
+- **MatchCenter**: Contenedor principal de partidos
+- **TeamPage**: Información del equipo y jugadores
+- **AdminPanel**: Panel de control para gestión de partidos
+- **ClubPage**: Página informativa del club
 
-**Responsabilidades:**
-- Manejo de estado de navegación (showArrows)
-- Lógica de scroll horizontal
-- Contenedor principal para las cards
-- Integración de NavigationArrows
-- **Alineación de cards** de izquierda a derecha (justify-start)
+### Cómo modificar estilos
 
-**Props:**
-```javascript
-{
-  children  // Componentes WaterpoloGameCard
-}
-```
+1. **Colores**: Buscar y reemplazar las clases de color en los componentes
+   - Ejemplo: `bg-slate-800`, `text-cyan-500`, `hover:bg-amber-500`
+2. **Tipografía**: Configurar en `tailwind.config.js`
+3. **Layout**: Ajustar en `Layout.jsx`
+4. **Temas**: Personalizar en `index.css`
 
-### NavigationArrows.jsx
+### Componentes Clave
 
-**Responsabilidades:**
-- Renderizado de flechas de navegación
-- Animaciones de aparición/desaparición
-- Manejo de eventos de click
-
-**Props:**
-```javascript
-{
-  showArrows,    // boolean - visibilidad de flechas
-  onScrollLeft,  // function - callback scroll izquierdo
-  onScrollRight  // function - callback scroll derecho
-}
-```
-
-### LoadingSpinner.jsx
-
-**Responsabilidades:**
-- Estado de carga con spinner animado
-- Mensaje de carga para mejor UX
-- Reutilizable en toda la aplicación
-
-**Props:** Ninguno
-
-### WaterpoloGameCard.jsx
-
-**Responsabilidades:**
-- Renderizado de información de un partido
-- Lógica de estados (EN VIVO, FINALIZADO, PROGRAMADO)
-- Animación del indicador EN VIVO
-- Espaciado consistente
-
-**Props:**
-```javascript
-{
-  date,           // "25 Ene"
-  time,           // "7:00 PM"
-  competition,    // "Liga Colombiana"
-  homeTeam,       // "CPA Medellin"
-  awayTeam,       // "Belen"
-  homeScore,      // 13
-  awayScore,      // 10
-  period,         // 3
-  status          // "EN VIVO"
-}
-```
-
-### gamesService.js
-
-**Responsabilidades:**
-- Conexión con Supabase
-- Funciones CRUD para partidos
-- Manejo de errores
-
-**Funciones:**
-- `fetchGames()`: Obtiene todos los partidos
-- `createGame(data)`: Crea un nuevo partido
-
-## 📊 Estados de Partidos
-
-### EN VIVO
-- **Visual**: Punto rojo animado + texto "EN VIVO"
-- **Datos**: Muestra scores y período actual
-- **Ejemplo**: `Q3` para tercer período
-
-### FINALIZADO
-- **Visual**: Texto "FINALIZADO"
-- **Datos**: Muestra scores finales + "FT"
-- **Período**: NULL
-
-### PROGRAMADO
-- **Visual**: Hora programada
-- **Datos**: No muestra scores ni período
-- **Espaciado**: Reserva espacio para consistencia visual
-
-## 🎨 Personalización
+- **WaterpoloGameCard**: Muestra la información de cada partido
+- **MatchCenter**: Contenedor principal que gestiona la lógica de partidos
+- **AdminPanel**: Interfaz para administrar partidos en tiempo real
+- **ClubPage**: Muestra información institucional del club
 
 ### Cambiar Colores
 

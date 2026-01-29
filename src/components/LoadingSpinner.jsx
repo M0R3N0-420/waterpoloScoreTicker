@@ -2,10 +2,10 @@
 
 function LoadingSpinner() {
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center">
       <div className="flex flex-col items-center gap-4">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <span className="text-gray-600 font-medium">Cargando partidos...</span>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-700"></div>
+        <span className="text-slate-700 font-semibold">Cargando partidos...</span>
       </div>
     </div>
   )
