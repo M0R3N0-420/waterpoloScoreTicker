@@ -242,35 +242,169 @@ waterpoloScoreTicker/
 
 ### 6. AdminPanel.jsx (Panel de Administración)
 
-**Propósito**: Interfaz para gestionar todos los partidos del sistema.
+**Propósito**: Interfaz completa para gestionar todos los partidos del sistema con lista de partidos y panel de control.
 
 **Características**:
-- Lista de todos los partidos
-- Selección de partido para editar
-- Integración con GameControlPanel
-- Actualizaciones en tiempo real
+- Lista de todos los partidos con estado visual
+- Selección de partido para edición detallada
+- Integración completa con GameControlPanel
+- Actualizaciones en tiempo real de todos los partidos
+- Manejo de estados de carga y error
+- Diseño responsivo con grid layout
 
 **Estado**:
-- `games`: Array de todos los partidos
-- `selectedGame`: Partido actualmente seleccionado
-- `loading`: Estado de carga
+- `games`: Array de todos los partidos cargados
+- `selectedGame`: Partido actualmente seleccionado para editar
+- `loading`: Estado de carga inicial
+
+**Funciones Principales**:
+```javascript
+// Carga inicial de partidos
+const loadGames = async () => {
+  const gamesData = await fetchGames();
+  setGames(gamesData);
+  setSelectedGame(gamesData[0]); // Seleccionar primero por defecto
+};
+
+// Manejo de actualizaciones en tiempo real
+const channel = subscribeToAllGames((payload) => {
+  if (payload.eventType === 'UPDATE') {
+    // Actualizar partido modificado
+    setGames(prevGames => 
+      prevGames.map(game => 
+        game.id === payload.new.id ? payload.new : game
+      )
+    );
+  } else if (payload.eventType === 'INSERT') {
+    // Agregar nuevo partido
+    setGames(prevGames => [payload.new, ...prevGames]);
+  } else if (payload.eventType === 'DELETE') {
+    // Eliminar partido
+    setGames(prevGames => prevGames.filter(g => g.id !== payload.old.id));
+  }
+});
+
+// Actualizar partido seleccionado
+const handleGameUpdate = (updatedGame) => {
+  setSelectedGame(updatedGame);
+  setGames(prevGames => 
+    prevGames.map(game => 
+      game.id === updatedGame.id ? updatedGame : game
+    )
+  );
+};
+```
+
+**UI Components**:
+- Header con título y contador de partidos
+- Lista de partidos (1/3 del ancho en desktop)
+- Panel de control del partido seleccionado (2/3 del ancho)
+- Badges de estado con colores específicos
+- Estados vacíos con mensajes informativos
+
+**Estados Visuales**:
+- **EN VIVO**: Badge amber-50 con texto amber-800
+- **FINALIZADO**: Badge slate-100 con texto slate-800
+- **PROGRAMADO**: Badge cyan-50 con texto cyan-800
 
 ### 7. GameControlPanel.jsx (Control de Partidos)
 
-**Propósito**: Panel detallado para editar un partido específico.
+**Propósito**: Panel detallado para editar todos los aspectos de un partido específico.
 
 **Características**:
-- Control de marcadores generales
-- Control de puntuaciones por cuarto
-- Gestión de estados de partido
-- Control de período actual
-- Actualizaciones optimistas
+- Control de marcadores generales con botones +/- 
+- Control de puntuaciones por cuarto independientes
+- Gestión de estados de partido (PROGRAMADO/EN VIVO/FINALIZADO)
+- Control de período actual (Q1-Q4)
+- Actualizaciones optimistas con feedback inmediato
+- Reset completo de marcador y cuartos
+- Eventos custom para sincronización
 
-**Funciones**:
-- `updateGame()`: Actualiza datos generales
-- `updateScore()`: Actualiza marcador
-- `updateQuarter()`: Actualiza puntuaciones por cuarto
-- `updateGameStatus()`: Cambia estado del partido
+**Estado Local**:
+```javascript
+const [localScores, setLocalScores] = useState({
+  home: game.home_score || 0,
+  away: game.away_score || 0
+});
+
+const [localQuarters, setLocalQuarters] = useState({
+  q1Home: game.q1_home_score || 0,
+  q1Away: game.q1_away_score || 0,
+  q2Home: game.q2_home_score || 0,
+  q2Away: game.q2_away_score || 0,
+  q3Home: game.q3_home_score || 0,
+  q3Away: game.q3_away_score || 0,
+  q4Home: game.q4_home_score || 0,
+  q4Away: game.q4_away_score || 0
+});
+
+const [currentPeriod, setCurrentPeriod] = useState(game.period || 1);
+```
+
+**Funciones Principales**:
+```javascript
+// Actualizar marcador y cuartos
+const handleScoreUpdate = async () => {
+  const success = await updateGame(game.id, {
+    home_score: localScores.home,
+    away_score: localScores.away,
+    period: currentPeriod,
+    q1_home_score: localQuarters.q1Home,
+    q1_away_score: localQuarters.q1Away,
+    // ... todos los cuartos
+    updated_at: new Date().toISOString()
+  });
+  if (success) {
+    onUpdate(success);
+    // Eventos para sincronización
+    window.dispatchEvent(new CustomEvent('game:updated', { detail: success }));
+    localStorage.setItem('game:updated', JSON.stringify({ at: Date.now(), game: success }));
+  }
+};
+
+// Cambiar estado del partido
+const handleStatusChange = async (newStatus) => {
+  const success = await updateGameStatus(game.id, newStatus);
+  if (success) {
+    onUpdate(success);
+    alert(`Estado cambiado a ${newStatus}`);
+  }
+};
+
+// Reset completo
+const handleResetScore = async () => {
+  const confirmed = window.confirm('¿Reiniciar marcador y cuartos a 0?');
+  if (confirmed) {
+    const resetGame = await updateGame(game.id, {
+      home_score: 0, away_score: 0, period: 1,
+      // ... todos los cuartos a 0
+    });
+    // Actualizar estado local inmediatamente
+    setLocalScores({ home: 0, away: 0 });
+    setLocalQuarters({ /* todos a 0 */ });
+    setCurrentPeriod(1);
+  }
+};
+
+// Incrementar/decrementar marcador
+const incrementScore = (team) => {
+  setLocalScores(prev => ({ ...prev, [team]: prev[team] + 1 }));
+  setCurrentQuarterToScores(currentPeriod, updatedScores);
+};
+```
+
+**UI Structure**:
+- Header con título del partido y badges de estado/periodo
+- Sección de marcador rápido con controles +/- para cada equipo
+- Sección de cuartos con inputs independientes
+- Botones de acción principales (Actualizar, Cambiar Estado, Reset)
+- Diseño responsivo con grid layouts
+
+**Validaciones**:
+- Scores no pueden ser negativos
+- Período limitado a 1-4
+- Confirmación para acciones destructivas (reset)
+- Sincronización automática de cuartos con marcador principal
 
 ### 8. ClubPage.jsx (Página del Club)
 
@@ -325,34 +459,122 @@ waterpoloScoreTicker/
 **Propósito**: Contenedor scrollable con navegación para las tarjetas de partidos.
 
 **Características**:
-- Scroll horizontal con flechas
-- Navegación suave
-- Ocultación de scrollbar
-- Hover effects
+- Scroll horizontal suave con flechas de navegación
+- Flechas aparecen/desaparecen con hover
+- Scrollbar oculto para diseño limpio
+- Navegación con botones de 200px
+- Diseño responsivo
+- Contenedor flexible para tarjetas
 
-**Componentes**:
-- `NavigationArrows.jsx`: Flechas de navegación
-- Scroll horizontal personalizado
+**Estado**:
+```javascript
+const [showArrows, setShowArrows] = useState(false);
+```
+
+**Funciones de Navegación**:
+```javascript
+const scrollLeft = () => {
+  const container = document.getElementById("cards-container");
+  container.scrollBy({ left: -200, behavior: "smooth" });
+};
+
+const scrollRight = () => {
+  const container = document.getElementById("cards-container");
+  container.scrollBy({ left: 200, behavior: "smooth" });
+};
+```
+
+**Props**:
+- `children`: Componentes WaterpoloGameCard a renderizar
+
+**Event Handlers**:
+- `onMouseEnter`: Muestra las flechas de navegación
+- `onMouseLeave`: Oculta las flechas de navegación
+
+**CSS Classes**:
+- `relative`: Posicionamiento relativo para flechas absolutas
+- `overflow-x-auto scrollbar-hide`: Scroll horizontal sin scrollbar visible
+- `flex gap-4`: Layout flexible con espaciado
+- `min-w-max`: Ancho mínimo basado en contenido
 
 ### 12. NavigationArrows.jsx (Flechas de Navegación)
 
-**Propósito**: Componente de flechas para navegar entre tarjetas.
+**Propósito**: Componente de flechas para navegar entre tarjetas de partidos.
 
 **Características**:
-- Animación de entrada/salida
-- Hover effects
-- Scroll suave
-- Diseño circular con sombra
+- Animación de entrada/salida con scale y opacity
+- Hover effects con cambio de color
+- Diseño circular con sombra y borde
+- Posicionamiento absoluto
+- SVG icons para flechas
+- Transiciones suaves de 200ms
+
+**Props**:
+```javascript
+{
+  showArrows,      // Boolean: controla visibilidad
+  onScrollLeft,    // Function: callback scroll izquierda
+  onScrollRight    // Function: callback scroll derecha
+}
+```
+
+**Componentes Renderizados**:
+- Flecha izquierda (posición absoluta izquierda)
+- Flecha derecha (posición absoluta derecha)
+
+**CSS Classes Dinámicas**:
+```javascript
+className={`absolute left-0 top-1/2 -translate-y-1/2 z-10 
+  bg-white/95 rounded-full shadow-lg p-1.5 
+  transition-all duration-200 border border-slate-200 
+  hover:bg-cyan-50 
+  ${showArrows ? 'opacity-100 scale-105' : 'opacity-0 scale-95'}`}
+```
+
+**SVG Icons**:
+- Izquierda: `M15 19l-7-7 7-7` (path)
+- Derecha: `M9 5l7 7-7 7` (path)
 
 ### 13. LoadingSpinner.jsx (Spinner de Carga)
 
-**Propósito**: Componente de carga simple y elegante.
+**Propósito**: Componente de carga simple y elegante para estados de loading.
 
 **Características**:
-- Spinner animado cyan-700
-- Texto de estado
-- Diseño centrado
-- Fondo slate-50
+- Spinner animado con Tailwind
+- Texto descriptivo de estado
+- Diseño centrado vertical y horizontal
+- Fondo slate-50 consistente
+- Tamaño fijo del spinner (h-8 w-8)
+
+**Estructura JSX**:
+```javascript
+<div className="min-h-screen bg-slate-50 flex items-center justify-center">
+  <div className="flex flex-col items-center gap-4">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-700"></div>
+    <span className="text-slate-700 font-semibold">Cargando partidos...</span>
+  </div>
+</div>
+```
+
+**CSS Classes**:
+- `min-h-screen`: Altura mínima de pantalla completa
+- `flex items-center justify-center`: Centrado perfecto
+- `animate-spin`: Animación de rotación Tailwind
+- `border-b-2 border-cyan-700: Borde inferior animado cyan
+- `gap-4`: Espaciado vertical entre spinner y texto
+
+**Uso Típico**:
+```javascript
+if (loading) {
+  return <LoadingSpinner />;
+}
+```
+
+**Variantes Posibles**:
+- Diferentes tamaños (h-4 w-4, h-12 w-12)
+- Diferentes colores (border-cyan-500, border-amber-500)
+- Textos personalizados según contexto
+- Fondos diferentes si es necesario
 
 ---
 
