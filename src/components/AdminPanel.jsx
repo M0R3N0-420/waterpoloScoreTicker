@@ -7,6 +7,10 @@ import GameControlPanel from './GameControlPanel';
 import LoadingSpinner from './LoadingSpinner';
 
 function AdminPanel() {
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   const [games, setGames] = useState([]);
   const [selectedGame, setSelectedGame] = useState(null);
   const [loading, setLoading] = useState(true);

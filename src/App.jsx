@@ -1,6 +1,7 @@
 // App.jsx - Componente principal de la aplicación
 
 import { Routes, Route } from "react-router-dom";
+import { useEffect } from "react";
 import LoadingSpinner from "./components/LoadingSpinner";
 import Hero from "./components/Hero";
 import NavBar from "./components/NavBar";
@@ -11,6 +12,10 @@ import ClubPage from "./components/ClubPage";
 import Layout from "./components/Layout";
 
 function HomePage() {
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   return (
     <div className="min-h-screen bg-gray-100">
       <Hero />

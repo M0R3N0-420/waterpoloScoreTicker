@@ -1,214 +1,291 @@
-// TeamPage.jsx - Página de equipo simplificada
+// TeamPage.jsx - Página de equipos con datos dinámicos de Supabase
+
+import { useEffect, useState } from "react";
+import { fetchPlayers, fetchPlayersByPosition, getTeamStats } from "../services/playersService";
 
 function TeamPage() {
-  const players = {
-    goalkeepers: [
-      {
-        id: 1,
-        name: "Marko Nikolic",
-        number: "#1",
-        position: "GK",
-        country: "Serbia",
-        image: "/images/players/marko-nikolic.jpg",
-        stats: { saves: 156, games: 18 }
-      },
-      {
-        id: 2,
-        name: "David Chen",
-        number: "#13",
-        position: "GK",
-        country: "China",
-        image: "/images/players/david-chen.jpg",
-        stats: { saves: 89, games: 12 }
-      }
-    ],
-    defenders: [
-      {
-        id: 3,
-        name: "James Wright",
-        number: "#4",
-        position: "DEF",
-        country: "USA",
-        image: "/images/players/james-wright.jpg",
-        stats: { steals: 22, blocks: 15 }
-      },
-      {
-        id: 4,
-        name: "Luca Romano",
-        number: "#7",
-        position: "DEF",
-        country: "Italy",
-        image: "/images/players/luca-romano.jpg",
-        stats: { steals: 31, games: 19 }
-      }
-    ],
-    attackers: [
-      {
-        id: 5,
-        name: "Aris Papadakis",
-        number: "#10",
-        position: "ATT",
-        country: "Greece",
-        image: "/images/players/aris-papadakis.jpg",
-        stats: { goals: 42, assists: 12 }
-      },
-      {
-        id: 6,
-        name: "Santi Garcia",
-        number: "#5",
-        position: "ATT",
-        country: "Spain",
-        image: "/images/players/santi-garcia.jpg",
-        stats: { goals: 28, games: 20 }
-      }
-    ],
-    boyas: [
-      {
-        id: 7,
-        name: "Juan P. Moreno",
-        number: "#7",
-        position: "BOYA",
-        country: "Colombia",
-        image: "/images/players/juan-moreno.jpg",
-        stats: { goals: 42, assists: 12 }
-      }
-    ]
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
+  const [players, setPlayers] = useState([]);
+  const [teamStats, setTeamStats] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState('masculino');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadTeamData();
+  }, [selectedCategory]);
+
+  const loadTeamData = async () => {
+    try {
+      setLoading(true);
+      const [playersData, statsData] = await Promise.all([
+        fetchPlayers(selectedCategory),
+        getTeamStats(selectedCategory)
+      ]);
+
+      setPlayers(playersData);
+      setTeamStats(statsData);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error loading team data:', error);
+      setLoading(false);
+    }
   };
 
-  const PlayerCard = ({ player }) => {
-    const isGoalkeeper = player.position === "GK";
-    const isDefender = player.position === "DEF";
+  const categories = [
+    { value: 'semillero', label: 'Semillero' },
+    { value: 'juvenil', label: 'Juvenil' },
+    { value: 'masculino', label: 'Masculino' },
+    { value: 'femenino', label: 'Femenino' }
+  ];
 
-    return (
-      <div className="group relative overflow-hidden rounded-xl bg-white border border-slate-200 shadow-lg hover:shadow-xl transition-all duration-300">
-        {/* Player Image */}
-        <div className="aspect-3/4 bg-linear-to-b from-cyan-50 to-slate-100 flex items-center justify-center relative overflow-hidden">
-          {player.image ? (
-            <img
-              src={player.image}
-              alt={player.name}
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-              onError={(e) => {
-                e.target.style.display = 'none';
-                e.target.nextSibling.style.display = 'flex';
-              }}
-            />
-          ) : null}
-          {/* Fallback placeholder */}
-          <div className="w-20 h-20 bg-cyan-700 rounded-full flex items-center justify-center" style={{ display: player.image ? 'none' : 'flex' }}>
-            <span className="text-white text-2xl font-bold">{player.number}</span>
-          </div>
-        </div>
+  const positionGroups = {
+    goalkeepers: players.filter(p => p.position === 'GK'),
+    defenders: players.filter(p => p.position === 'DEF'),
+    attackers: players.filter(p => p.position === 'ATT'),
+    centers: players.filter(p => p.position === 'CF')
+  };
 
-        {/* Player Info */}
-        <div className="absolute inset-0 p-6 flex flex-col justify-end bg-linear-to-t from-black/80 to-transparent">
-          <div className="flex items-center justify-between mb-2">
-            <span className={`text-xs font-black px-2 py-1 rounded ${isGoalkeeper ? 'bg-cyan-700 text-white' :
-              isDefender ? 'bg-slate-900 text-white border-2 border-amber-300' :
-                'bg-cyan-700 text-white'
-              }`}>
-              {player.position}
-            </span>
-            <span className="text-amber-300 text-3xl font-black opacity-70">{player.number}</span>
-          </div>
-          <h3 className="text-white text-xl font-bold">{player.name}</h3>
-          <div className="flex items-center gap-2 mt-1">
-            <div className="w-4 h-4 bg-gray-300 rounded-full border border-white/20"></div>
-            <p className="text-gray-300 text-sm uppercase tracking-wider">{player.country}</p>
-          </div>
-        </div>
-
-        {/* Stats Overlay x
-        <div className="stats-overlay absolute inset-0 bg-black/95 flex flex-col items-center justify-center p-6 text-center opacity-0 transform translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
-          <p className="text-cyan-200 uppercase text-xs font-bold tracking-widest mb-4">Season Stats</p>
-          <div className="grid grid-cols-2 gap-6 mb-8">
-            {Object.entries(player.stats).map(([key, value]) => (
-              <div key={key}>
-                <p className="text-white text-3xl font-black">{value}</p>
-                <p className="text-gray-400 text-[10px] uppercase font-bold">
-                  {key.charAt(0).toUpperCase() + key.slice(1)}
-                </p>
+  const PlayerCard = ({ player }) => (
+    <div className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+      <div className="relative h-48 bg-linear-to-br from-cyan-100 to-blue-100">
+        {player.image ? (
+          <img
+            src={player.image}
+            alt={player.name}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <div className="text-center">
+              <div className="w-20 h-20 bg-white/50 rounded-full flex items-center justify-center mx-auto mb-2">
+                <span className="text-2xl font-bold text-cyan-700">{player.number}</span>
               </div>
-            ))}
+              <p className="text-sm text-cyan-700 font-medium">Sin foto</p>
+            </div>
+          </div>
+        )}
+        <div className="absolute top-2 right-2 bg-cyan-600 text-white px-2 py-1 rounded-full text-xs font-bold">
+          #{player.number}
+        </div>
+        <div className="absolute bottom-2 left-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded text-xs font-semibold text-slate-700">
+          {player.position}
+        </div>
+      </div>
+
+      <div className="p-4">
+        <h3 className="font-bold text-lg text-slate-900 mb-1">{player.name}</h3>
+        <p className="text-sm text-slate-600 mb-3 flex items-center gap-1">
+          🏳️ {player.country}
+        </p>
+
+        <div className="grid grid-cols-3 gap-2 text-center">
+          <div className="bg-slate-50 rounded-lg p-2">
+            <p className="text-xs text-slate-500">Goles</p>
+            <p className="font-bold text-cyan-600">{player.stats?.goals || 0}</p>
+          </div>
+          <div className="bg-slate-50 rounded-lg p-2">
+            <p className="text-xs text-slate-500">Asist</p>
+            <p className="font-bold text-amber-600">{player.stats?.assists || 0}</p>
+          </div>
+          <div className="bg-slate-50 rounded-lg p-2">
+            <p className="text-xs text-slate-500">Part</p>
+            <p className="font-bold text-slate-700">{player.stats?.games || 0}</p>
           </div>
         </div>
-        */}
+      </div>
+    </div>
+  );
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-cyan-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-slate-600">Cargando equipo...</p>
+        </div>
       </div>
     );
-  };
+  }
 
   return (
     <div className="min-h-screen bg-slate-50">
-
-
-      {/* Header */}
-      <div className="bg-linear-to-br from-slate-950 via-blue-950 to-cyan-900 text-white py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-5xl font-bold mb-4">Conozca el Equipo</h1>
-          <p className="text-xl text-cyan-100 max-w-3xl">
-            El equipo powerhouse detrás de la búsqueda de dominación de CPA Medellín.
-            Atletismo, estrategia y pura tenacidad.
-          </p>
+      {/* Hero Section */}
+      <div className="relative bg-linear-to-br from-slate-900 via-blue-900 to-cyan-800 overflow-hidden">
+        <div className="absolute inset-0 opacity-5">
+          <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse">
+                <path d="M 60 0 L 0 0 0 60" fill="none" stroke="white" strokeWidth="1" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#grid)" />
+          </svg>
         </div>
 
+        <div className="relative z-10 px-6 md:px-12 py-20 md:py-32">
+          <div className="max-w-7xl mx-auto text-center">
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-black text-white tracking-tight leading-none mb-6">
+              NUESTRO
+              <span className="block text-cyan-400">EQUIPO</span>
+            </h1>
+            <p className="text-xl text-cyan-100/90 max-w-3xl mx-auto mb-12">
+              Conoce a los atletas que representan los valores y la excelencia del CPA Medellín.
+            </p>
+
+            {/* Category Selector */}
+            <div className="flex flex-wrap justify-center gap-3 mb-12">
+              {categories.map(cat => (
+                <button
+                  key={cat.value}
+                  onClick={() => setSelectedCategory(cat.value)}
+                  className={`px-6 py-3 rounded-xl font-semibold transition-all duration-200 ${selectedCategory === cat.value
+                    ? 'bg-cyan-600 text-white shadow-lg transform scale-105'
+                    : 'bg-white/10 text-white border border-white/30 hover:bg-white/20'
+                    }`}
+                >
+                  {cat.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Team Stats */}
+            {teamStats && (
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-6 max-w-4xl mx-auto">
+                <div className="text-center">
+                  <p className="text-3xl font-black text-white">{teamStats.totalPlayers}</p>
+                  <p className="text-sm font-semibold text-cyan-300/80">Jugadores</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-3xl font-black text-white">{teamStats.totalGoals}</p>
+                  <p className="text-sm font-semibold text-cyan-300/80">Goles</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-3xl font-black text-white">{teamStats.totalAssists}</p>
+                  <p className="text-sm font-semibold text-cyan-300/80">Asistencias</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-3xl font-black text-white">{teamStats.totalSaves}</p>
+                  <p className="text-sm font-semibold text-cyan-300/80">Atajadas</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-3xl font-black text-white">{teamStats.totalGames}</p>
+                  <p className="text-sm font-semibold text-cyan-300/80">Partidos</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="absolute bottom-0 left-0 right-0 h-32 bg-linear-to-t from-slate-50 to-transparent"></div>
       </div>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      {/* Players Section */}
+      <div className="max-w-7xl mx-auto px-6 md:px-12 py-16">
+        {players.length === 0 ? (
+          <div className="text-center py-16">
+            <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-12 h-12 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-semibold text-slate-700 mb-2">No hay jugadores en esta categoría</h3>
+            <p className="text-slate-500">Pronto se agregarán nuevos jugadores al equipo.</p>
+          </div>
+        ) : (
+          <div className="space-y-16">
+            {/* Goalkeepers */}
+            {positionGroups.goalkeepers.length > 0 && (
+              <div>
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-12 h-12 bg-cyan-100 rounded-xl flex items-center justify-center">
+                    <svg className="w-6 h-6 text-cyan-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                  </div>
+                  <h2 className="text-2xl font-black text-slate-900">Porteros</h2>
+                  <span className="bg-cyan-100 text-cyan-700 px-3 py-1 rounded-full text-sm font-semibold">
+                    {positionGroups.goalkeepers.length}
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {positionGroups.goalkeepers.map(player => (
+                    <PlayerCard key={player.id} player={player} />
+                  ))}
+                </div>
+              </div>
+            )}
 
-        {/* Goalkeepers Section */}
-        <section className="mb-16">
-          <div className="flex items-center gap-4 mb-8">
-            <h2 className="text-3xl font-black text-slate-900 uppercase tracking-wider">Porteros</h2>
-            <div className="h-px flex-1 bg-slate-200"></div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {players.goalkeepers.map(player => (
-              <PlayerCard key={player.id} player={player} />
-            ))}
-          </div>
-        </section>
+            {/* Defenders */}
+            {positionGroups.defenders.length > 0 && (
+              <div>
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
+                    <svg className="w-6 h-6 text-amber-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                  </div>
+                  <h2 className="text-2xl font-black text-slate-900">Defensas</h2>
+                  <span className="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-sm font-semibold">
+                    {positionGroups.defenders.length}
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {positionGroups.defenders.map(player => (
+                    <PlayerCard key={player.id} player={player} />
+                  ))}
+                </div>
+              </div>
+            )}
 
-        {/* Defenders Section */}
-        <section className="mb-16">
-          <div className="flex items-center gap-4 mb-8">
-            <h2 className="text-3xl font-black text-slate-900 uppercase tracking-wider">Defensores</h2>
-            <div className="h-px flex-1 bg-slate-200"></div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {players.defenders.map(player => (
-              <PlayerCard key={player.id} player={player} />
-            ))}
-          </div>
-        </section>
+            {/* Centers */}
+            {positionGroups.centers.length > 0 && (
+              <div>
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                    <svg className="w-6 h-6 text-green-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  </div>
+                  <h2 className="text-2xl font-black text-slate-900">Centrales</h2>
+                  <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-semibold">
+                    {positionGroups.centers.length}
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {positionGroups.centers.map(player => (
+                    <PlayerCard key={player.id} player={player} />
+                  ))}
+                </div>
+              </div>
+            )}
 
-        {/* Attackers Section */}
-        <section className="mb-16">
-          <div className="flex items-center gap-4 mb-8">
-            <h2 className="text-3xl font-black text-slate-900 uppercase tracking-wider">Atacantes</h2>
-            <div className="h-px flex-1 bg-slate-200"></div>
+            {/* Attackers */}
+            {positionGroups.attackers.length > 0 && (
+              <div>
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
+                    <svg className="w-6 h-6 text-red-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
+                    </svg>
+                  </div>
+                  <h2 className="text-2xl font-black text-slate-900">Atacantes</h2>
+                  <span className="bg-red-100 text-red-700 px-3 py-1 rounded-full text-sm font-semibold">
+                    {positionGroups.attackers.length}
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {positionGroups.attackers.map(player => (
+                    <PlayerCard key={player.id} player={player} />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {players.attackers.map(player => (
-              <PlayerCard key={player.id} player={player} />
-            ))}
-          </div>
-        </section>
-
-        {/* Boyas Section */}
-        <section className="mb-16">
-          <div className="flex items-center gap-4 mb-8">
-            <h2 className="text-3xl font-black text-slate-900 uppercase tracking-wider">Boyas</h2>
-            <div className="h-px flex-1 bg-slate-200"></div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {players.boyas.map(player => (
-              <PlayerCard key={player.id} player={player} />
-            ))}
-          </div>
-        </section>
-
-      </main>
+        )}
+      </div>
     </div>
   );
 }
